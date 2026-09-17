@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>ARCADE10</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 :root{
   --bg-deep:#0b0e1a;
@@ -21,51 +22,94 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;height:100%;}
 body{
-  background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(143,123,255,0.25), transparent 60%),
-    radial-gradient(1000px 500px at 100% 0%, rgba(79,243,214,0.18), transparent 55%),
-    linear-gradient(180deg, var(--bg-deep), var(--bg-mid) 55%, var(--bg-deep));
+  background:var(--bg-deep);
   color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   min-height:100vh;
   overflow-x:hidden;
+  position:relative;
 }
+.blob{position:fixed;border-radius:50%;filter:blur(70px);pointer-events:none;z-index:0;opacity:.18;}
+.blob1{width:380px;height:380px;top:-140px;left:-100px;background:var(--violet);}
+.blob2{width:320px;height:320px;bottom:-160px;right:-120px;background:var(--cyan);}
+#app{position:relative;z-index:1;}
+
+/* ---------- SPLASH ---------- */
+#splash{
+  position:fixed;inset:0;z-index:50;overflow:hidden;
+  background:
+    radial-gradient(650px 650px at 15% 15%, rgba(143,123,255,.4), transparent 60%),
+    radial-gradient(650px 650px at 85% 85%, rgba(79,243,214,.32), transparent 60%),
+    var(--bg-deep);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  transition:opacity .5s ease, visibility .5s ease;
+}
+#splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.splash-blob{position:absolute;border-radius:50%;filter:blur(75px);opacity:.5;animation:splashFloat 3.2s ease-in-out infinite alternate;}
+.splash-blob.b1{width:260px;height:260px;top:-70px;left:-70px;background:var(--violet);}
+.splash-blob.b2{width:240px;height:240px;bottom:-70px;right:-70px;background:var(--cyan);animation-delay:.5s;}
+@keyframes splashFloat{0%{transform:translate(0,0) scale(1)}100%{transform:translate(24px,24px) scale(1.18)}}
+.splash-mascots{position:absolute;inset:0;pointer-events:none;}
+.mascot{position:absolute;width:50px;height:50px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45));animation:mascotFloat 2.6s ease-in-out infinite;}
+.mascot svg{width:100%;height:100%;}
+.mascot.m1{top:13%;left:10%;}
+.mascot.m2{top:16%;right:9%;animation-delay:.45s;}
+.mascot.m3{bottom:15%;left:11%;animation-delay:.9s;}
+.mascot.m4{bottom:18%;right:10%;animation-delay:1.3s;}
+@keyframes mascotFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-12px) rotate(-4deg)}}
+.splash-badge{
+  width:88px;height:88px;border-radius:26px;position:relative;z-index:1;
+  background:linear-gradient(145deg,var(--cyan),var(--violet) 55%,var(--magenta));
+  display:flex;align-items:center;justify-content:center;font-size:40px;
+  animation:pulseGlow 1.8s ease-in-out infinite;
+}
+@keyframes pulseGlow{0%,100%{box-shadow:0 14px 40px rgba(143,123,255,.4)}50%{box-shadow:0 16px 56px rgba(79,243,214,.55)}}
+.splash-name{position:relative;z-index:1;font-size:23px;font-weight:800;letter-spacing:.2px;}
+.splash-bar{position:relative;z-index:1;width:160px;height:4px;border-radius:4px;background:rgba(255,255,255,0.12);overflow:hidden;}
+.splash-bar span{display:block;height:100%;width:0%;border-radius:4px;
+  background:linear-gradient(90deg,var(--cyan),var(--violet),var(--magenta));
+  animation:loadbar 1.7s ease forwards;}
+@keyframes loadbar{0%{width:0%}70%{width:88%}100%{width:100%}}
+.splash-pct{position:relative;z-index:1;font-size:11px;color:var(--sub);font-weight:700;letter-spacing:.5px;}
+.splash-auth{position:relative;z-index:1;font-size:12.5px;color:var(--sub);}
+.splash-auth b{color:var(--amber);font-weight:700;}
 #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:0 16px 22px;}
 
 /* ---------- HEADER ---------- */
 header.top{
-  padding:22px 2px 10px;
-  display:flex;flex-direction:column;gap:4px;
+  padding:20px 2px 16px;
+  display:flex;align-items:center;gap:12px;
 }
-.brand{display:flex;align-items:baseline;gap:10px;}
-.brand h1{
-  margin:0;font-size:30px;font-weight:800;letter-spacing:-0.5px;
-  background:linear-gradient(90deg,var(--cyan),var(--violet) 60%,var(--magenta));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+.head-badge{
+  width:46px;height:46px;border-radius:14px;flex:none;
+  background:linear-gradient(145deg,var(--cyan),var(--violet) 55%,var(--magenta));
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  box-shadow:0 6px 18px rgba(143,123,255,.3);
 }
-.brand .auth{
-  font-size:13px;color:var(--sub);font-weight:600;
+.head-text h1{
+  margin:0;font-size:19px;font-weight:800;letter-spacing:-.2px;color:var(--text);
 }
-.brand .auth a{color:var(--amber);text-decoration:none;}
-.tag{font-size:14px;color:var(--sub);margin-top:2px;}
+.head-text .tag{font-size:12.5px;color:var(--sub);margin-top:1px;}
+.head-text .auth{font-size:11.5px;color:var(--sub);margin-top:2px;}
+.head-text .auth a{color:var(--amber);text-decoration:none;font-weight:700;}
 
 /* ---------- MENU GRID ---------- */
 #menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
 .card{
-  position:relative;background:var(--panel);border:1px solid var(--line);
-  border-radius:16px;padding:16px 14px 14px;cursor:pointer;
-  transition:transform .15s ease, background .15s ease;
-  overflow:hidden;
+  position:relative;background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;padding:14px;cursor:pointer;
+  transition:transform .12s ease, border-color .15s ease;
 }
 .card:active{transform:scale(.96);}
-.card .glow{
-  position:absolute;inset:auto -30% -60% auto;width:120px;height:120px;
-  border-radius:50%;filter:blur(28px);opacity:.35;pointer-events:none;
+.card:hover{border-color:rgba(255,255,255,0.16);}
+.card .ico{
+  width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:12px;
 }
-.card .ico{font-size:30px;display:block;margin-bottom:10px;}
-.card h3{margin:0 0 4px;font-size:15px;font-weight:700;}
-.card p{margin:0;font-size:12px;color:var(--sub);line-height:1.35;}
-.card .bar{position:absolute;left:0;top:0;height:3px;width:100%;}
+.card .ico svg{width:26px;height:26px;display:block;}
+.card h3{margin:0 0 3px;font-size:14.5px;font-weight:700;letter-spacing:-.1px;}
+.card p{margin:0;font-size:11.5px;color:var(--sub);line-height:1.4;}
 
 /* ---------- GAME VIEW ---------- */
 #gameView{display:none;flex-direction:column;flex:1;padding-top:14px;}
@@ -118,14 +162,32 @@ footer.credit a{color:var(--cyan);text-decoration:none;font-weight:700;}
 </style>
 </head>
 <body>
+<div id="splash">
+  <div class="splash-blob b1"></div>
+  <div class="splash-blob b2"></div>
+  <div class="splash-mascots">
+    <div class="mascot m1"><svg viewBox="0 0 40 40"><path d="M6 32 Q4 20 14 20 Q24 20 24 10 Q24 4 17 4" stroke="#4ff3d6" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="17" cy="4" r="2.6" fill="#4ff3d6"/></svg></div>
+    <div class="mascot m2"><svg viewBox="0 0 40 40"><ellipse cx="19" cy="22" rx="13" ry="10" fill="#ffc24f"/><path d="M30 20 L38 22.5 L30 25 Z" fill="#ff8f3d"/><circle cx="26" cy="18" r="2.3" fill="#0b0e1a"/></svg></div>
+    <div class="mascot m3"><svg viewBox="0 0 40 40"><path d="M20 4 L26 24 L20 20 L14 24 Z" fill="#ff4fa3"/><path d="M17 22 L20 34 L23 22 Z" fill="#ffc24f"/></svg></div>
+    <div class="mascot m4"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="#b07a4c"/><circle cx="15" cy="18" r="2" fill="#0b0e1a"/><circle cx="25" cy="18" r="2" fill="#0b0e1a"/></svg></div>
+  </div>
+  <div class="splash-badge">🎮</div>
+  <div class="splash-name">ARCADE10</div>
+  <div class="splash-bar"><span></span></div>
+  <div class="splash-pct" id="splashPct">0%</div>
+  <div class="splash-auth">by <b>@TheDarov</b></div>
+</div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
 <div id="app">
 
   <header class="top">
-    <div class="brand">
+    <div class="head-badge">🎮</div>
+    <div class="head-text">
       <h1>ARCADE10</h1>
-      <span class="auth">by <a href="https://t.me/TheDarov" target="_blank">@TheDarov</a></span>
+      <div class="tag">10 игр в одном мини-приложении</div>
+      <div class="auth">Автор — <a href="https://t.me/TheDarov" target="_blank">@TheDarov</a></div>
     </div>
-    <div class="tag">10 игр в одном мини-приложении</div>
   </header>
 
   <div id="menu"></div>
@@ -150,6 +212,23 @@ footer.credit a{color:var(--cyan);text-decoration:none;font-weight:700;}
 </div>
 
 <script>
+/* ============ SPLASH SCREEN ============ */
+window.addEventListener('load', ()=>{
+  const pctEl=document.getElementById('splashPct');
+  const t0=performance.now(), dur=1700;
+  function tickPct(t){
+    const p=Math.min(100, Math.round(((t-t0)/dur)*100));
+    pctEl.textContent=p+'%';
+    if(p<100) requestAnimationFrame(tickPct);
+  }
+  requestAnimationFrame(tickPct);
+  setTimeout(()=>{
+    const sp=document.getElementById('splash');
+    sp.classList.add('hide');
+    setTimeout(()=>sp.remove(), 600);
+  }, dur);
+});
+
 /* ============ TELEGRAM WEBAPP (optional, safe if absent) ============ */
 try{
   if(window.Telegram && window.Telegram.WebApp){
@@ -163,14 +242,28 @@ const GAMES = [
   {id:'snake',   icon:'🐍', name:'Змейка',        desc:'Классика с ростом и ускорением', color:'--cyan'},
   {id:'2048',    icon:'🔢', name:'2048',           desc:'Собери плитку 2048', color:'--amber'},
   {id:'flappy',  icon:'🐤', name:'Флаппи Берд',    desc:'Лети между труб', color:'--magenta'},
-  {id:'ttt',     icon:'❌', name:'Крестики-нолики',desc:'Против умного бота', color:'--violet'},
+  {id:'ttt',     icon:'❌', name:'Крестики-нолики',desc:'Против бота или онлайн с другом', color:'--violet'},
   {id:'memory',  icon:'🧠', name:'Память',         desc:'Найди пары карточек', color:'--cyan'},
   {id:'mole',    icon:'🔨', name:'Крот',           desc:'Успей ударить крота', color:'--amber'},
   {id:'breakout',icon:'🧱', name:'Арканоид',       desc:'Разбей все кирпичи', color:'--magenta'},
-  {id:'reflex',  icon:'⚡', name:'Реакция',        desc:'Проверь скорость реакции', color:'--violet'},
+  {id:'shooter', icon:'🚀', name:'Космо-стрелок',  desc:'Уничтожай астероиды в полёте', color:'--violet'},
   {id:'runner',  icon:'🦖', name:'Раннер',         desc:'Прыгай через препятствия', color:'--cyan'},
-  {id:'puzzle',  icon:'🧩', name:'Пятнашки',       desc:'Собери числа по порядку', color:'--amber'},
+  {id:'catch',   icon:'🍓', name:'Ловец фруктов',  desc:'Лови фрукты, избегай бомб', color:'--amber'},
 ];
+
+/* Custom minimal monochrome icons per game (self-contained SVG — real photos can't be embedded in a published, self-contained page) */
+const ICONS = {
+  snake:`<svg viewBox="0 0 40 40" fill="none"><path d="M6 32 Q4 20 14 20 Q24 20 24 10 Q24 4 17 4" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="17" cy="4" r="2.6" fill="#fff"/></svg>`,
+  '2048':`<svg viewBox="0 0 40 40"><rect x="5" y="9" width="30" height="22" rx="6" fill="none" stroke="#fff" stroke-width="2.2"/><text x="20" y="24" font-size="10" font-weight="800" fill="#fff" text-anchor="middle" font-family="Arial">2048</text></svg>`,
+  flappy:`<svg viewBox="0 0 40 40"><ellipse cx="19" cy="22" rx="13" ry="10" fill="#fff"/><path d="M30 20 L38 22.5 L30 25 Z" fill="#fff"/><path d="M8 22 Q0 19 6 13 Q11 17 11 22 Z" fill="#fff" fill-opacity=".55"/></svg>`,
+  ttt:`<svg viewBox="0 0 40 40" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><line x1="14" y1="5" x2="14" y2="35"/><line x1="26" y1="5" x2="26" y2="35"/><line x1="5" y1="14" x2="35" y2="14"/><line x1="5" y1="26" x2="35" y2="26"/><line x1="6" y1="6" x2="12" y2="12"/><line x1="12" y1="6" x2="6" y2="12"/><circle cx="31" cy="31" r="4"/></svg>`,
+  memory:`<svg viewBox="0 0 40 40"><rect x="4" y="10" width="15" height="21" rx="3" fill="#fff" fill-opacity=".5"/><rect x="21" y="7" width="16" height="24" rx="3" fill="#fff"/><path d="M27 22 l2-5 2 5 5 1-5 2-2 5-2-5-5-2 5-1z" fill="#141830"/></svg>`,
+  mole:`<svg viewBox="0 0 40 40"><ellipse cx="20" cy="32" rx="16" ry="4" fill="#fff" fill-opacity=".3"/><circle cx="20" cy="20" r="12" fill="#fff"/><circle cx="15" cy="18" r="2" fill="#141830"/><circle cx="25" cy="18" r="2" fill="#141830"/></svg>`,
+  breakout:`<svg viewBox="0 0 40 40"><rect x="4" y="6" width="10" height="5" rx="1.5" fill="#fff"/><rect x="16" y="6" width="10" height="5" rx="1.5" fill="#fff" fill-opacity=".7"/><rect x="28" y="6" width="8" height="5" rx="1.5" fill="#fff" fill-opacity=".5"/><circle cx="20" cy="22" r="3" fill="#fff"/><rect x="11" y="31" width="18" height="4" rx="2" fill="#fff"/></svg>`,
+  shooter:`<svg viewBox="0 0 40 40"><path d="M20 4 L26 24 L20 20 L14 24 Z" fill="#fff"/><path d="M17 22 L20 34 L23 22 Z" fill="#fff" fill-opacity=".55"/></svg>`,
+  runner:`<svg viewBox="0 0 40 40"><path d="M8 33 L8 22 Q8 13 17 13 L25 13 L25 8 L29 8 L29 13 L31 13 L31 19 L25 19 L25 33 L21 33 L21 26 L14 26 L14 33 Z" fill="#fff"/></svg>`,
+  catch:`<svg viewBox="0 0 40 40"><circle cx="14" cy="11" r="5" fill="#fff"/><circle cx="23" cy="7" r="4.5" fill="#fff" fill-opacity=".7"/><circle cx="29" cy="14" r="4" fill="#fff" fill-opacity=".5"/><path d="M5 19 L35 19 L30 34 L10 34 Z" fill="#fff" fill-opacity=".85"/></svg>`,
+};
 
 const menuEl = document.getElementById('menu');
 GAMES.forEach(g=>{
@@ -178,9 +271,7 @@ GAMES.forEach(g=>{
   c.className='card';
   c.onclick=()=>openGame(g.id);
   c.innerHTML = `
-    <div class="bar" style="background:var(${g.color})"></div>
-    <div class="glow" style="background:var(${g.color})"></div>
-    <span class="ico">${g.icon}</span>
+    <span class="ico" style="background:linear-gradient(145deg, rgba(255,255,255,.18), rgba(0,0,0,.28)), var(${g.color})">${ICONS[g.id]}</span>
     <h3>${g.name}</h3>
     <p>${g.desc}</p>`;
   menuEl.appendChild(c);
@@ -460,43 +551,67 @@ GAME_MODULES.flappy = function(){
   };
 };
 
-/* ================= 4. TIC TAC TOE ================= */
+/* ================= 4. TIC TAC TOE (bot + online) ================= */
 GAME_MODULES.ttt = function(){
   const dom=makeDom();
-  const wrap=document.createElement('div');
-  wrap.className='gridwrap'; wrap.style.gridTemplateColumns='repeat(3,1fr)'; wrap.style.gridTemplateRows='repeat(3,1fr)';
-  wrap.style.width='80%'; wrap.style.height='80%';
-  dom.appendChild(wrap);
-  let board, over;
+  dom.style.flexDirection='column';
   const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-  function reset(){ board=Array(9).fill(''); over=false; setScore('Вы: ❌  Бот: ⭕'); render(); }
-  function render(){
-    wrap.innerHTML='';
-    board.forEach((v,i)=>{
-      const c=document.createElement('div'); c.className='cell'; c.style.fontSize='34px';
-      c.textContent=v;
-      c.style.color = v==='❌'?'#4ff3d6':'#ff4fa3';
-      c.onclick=()=>playerMove(i);
-      wrap.appendChild(c);
-    });
-  }
+  let board, over, mode='menu', peer=null, conn=null, isHost=false, myMark, turn, roomCode;
+
   function winner(b){
     for(const [a,b1,c] of LINES) if(b[a]&&b[a]===b[b1]&&b[a]===b[c]) return b[a];
     return b.includes('')?null:'draw';
   }
+  function boardGrid(onClick){
+    const wrap=document.createElement('div');
+    wrap.className='gridwrap'; wrap.style.gridTemplateColumns='repeat(3,1fr)'; wrap.style.gridTemplateRows='repeat(3,1fr)';
+    wrap.style.width='80%'; wrap.style.height='80%';
+    board.forEach((v,i)=>{
+      const c=document.createElement('div'); c.className='cell'; c.style.fontSize='34px';
+      c.textContent=v; c.style.color = v==='❌'?'#4ff3d6':'#ff4fa3';
+      c.onclick=()=>onClick(i);
+      wrap.appendChild(c);
+    });
+    return wrap;
+  }
+
+  /* ---------- MENU ---------- */
+  function showMenu(){
+    mode='menu'; cleanupPeer();
+    dom.innerHTML='';
+    setScore(''); setHint('Выберите режим игры');
+    const box=document.createElement('div');
+    box.style.display='flex'; box.style.flexDirection='column'; box.style.gap='12px'; box.style.width='78%';
+    box.innerHTML=`
+      <button class="btn" id="bBot" style="width:100%">🤖 Против бота</button>
+      <button class="btn" id="bOnline" style="width:100%;background:linear-gradient(90deg,var(--magenta),var(--amber));color:#0b0e1a">🌐 Онлайн с другом</button>`;
+    dom.appendChild(box);
+    box.querySelector('#bBot').onclick=startBot;
+    box.querySelector('#bOnline').onclick=showOnlineMenu;
+  }
+
+  /* ---------- BOT MODE ---------- */
+  function startBot(){
+    mode='bot'; board=Array(9).fill(''); over=false;
+    setScore('Вы: ❌  Бот: ⭕'); setHint('Играйте крестиками против бота · ← Меню');
+    renderBot();
+  }
+  function renderBot(){
+    dom.innerHTML=''; dom.appendChild(boardGrid(playerMove));
+  }
   function playerMove(i){
     if(over||board[i]) return;
-    board[i]='❌'; render();
-    const w=winner(board); if(w){ finish(w); return; }
+    board[i]='❌'; renderBot();
+    const w=winner(board); if(w){ finishBot(w); return; }
     setTimeout(botMove,300);
   }
   function botMove(){
     if(over) return;
     const best=minimax(board,'⭕').index;
-    board[best]='⭕'; render();
-    const w=winner(board); if(w) finish(w);
+    board[best]='⭕'; renderBot();
+    const w=winner(board); if(w) finishBot(w);
   }
-  function finish(w){
+  function finishBot(w){
     over=true;
     if(w==='draw') showOverlay('Ничья!','');
     else if(w==='❌') showOverlay('Вы победили! 🎉','');
@@ -516,9 +631,97 @@ GAME_MODULES.ttt = function(){
     if(player==='⭕') return moves.reduce((a,c)=>c.score>a.score?c:a);
     return moves.reduce((a,c)=>c.score<a.score?c:a);
   }
-  setHint('Играйте крестиками против бота');
-  reset();
-  return { stop(){}, restart(){ reset(); } };
+
+  /* ---------- ONLINE MODE (real P2P via PeerJS, no server needed) ---------- */
+  function cleanupPeer(){ try{ if(conn) conn.close(); if(peer) peer.destroy(); }catch(e){} peer=null; conn=null; }
+  function showOnlineMenu(){
+    mode='online-menu'; dom.innerHTML='';
+    setScore(''); setHint('← Меню, чтобы выйти');
+    const box=document.createElement('div');
+    box.style.display='flex'; box.style.flexDirection='column'; box.style.gap='12px'; box.style.width='82%'; box.style.alignItems='center';
+    box.innerHTML=`
+      <button class="btn" id="bCreate" style="width:100%">Создать комнату</button>
+      <div style="color:var(--sub);font-size:12px">— или —</div>
+      <input id="codeIn" placeholder="Код комнаты" maxlength="5" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);text-align:center;text-transform:uppercase;font-size:16px;letter-spacing:2px">
+      <button class="btn" id="bJoin" style="width:100%">Присоединиться</button>`;
+    dom.appendChild(box);
+    box.querySelector('#bCreate').onclick=createRoom;
+    box.querySelector('#bJoin').onclick=()=>{ const c=box.querySelector('#codeIn').value.trim(); if(c) joinRoom(c); };
+  }
+  function waitingScreen(code){
+    dom.innerHTML='';
+    const box=document.createElement('div');
+    box.style.display='flex'; box.style.flexDirection='column'; box.style.gap='10px'; box.style.alignItems='center'; box.style.textAlign='center';
+    box.innerHTML=`
+      <div style="color:var(--sub);font-size:13px">Код комнаты — отправьте другу:</div>
+      <div style="font-size:34px;font-weight:800;letter-spacing:6px;color:var(--cyan)">${code}</div>
+      <div style="color:var(--sub);font-size:12.5px">Ожидание соперника…</div>`;
+    dom.appendChild(box);
+  }
+  function connErrorScreen(msg){
+    dom.innerHTML='';
+    const box=document.createElement('div');
+    box.style.display='flex'; box.style.flexDirection='column'; box.style.gap='10px'; box.style.alignItems='center'; box.style.textAlign='center';
+    box.innerHTML=`<div style="color:var(--danger);font-weight:700">Не удалось подключиться</div><div style="color:var(--sub);font-size:12.5px">${msg}</div>`;
+    dom.appendChild(box);
+  }
+  function createRoom(){
+    dom.innerHTML=''; setHint('← Меню, чтобы отменить');
+    roomCode = Math.random().toString(36).substr(2,5).toUpperCase();
+    peer = new Peer('arcade10-ttt-'+roomCode);
+    peer.on('open', ()=> waitingScreen(roomCode));
+    peer.on('connection', c=>{ conn=c; isHost=true; wireConn(); });
+    peer.on('error', e=> connErrorScreen('Код занят, попробуйте ещё раз'));
+  }
+  function joinRoom(code){
+    dom.innerHTML='';
+    const box=document.createElement('div'); box.style.textAlign='center'; box.style.color='var(--sub)'; box.textContent='Подключение…';
+    dom.appendChild(box);
+    peer = new Peer();
+    peer.on('open', ()=>{
+      conn = peer.connect('arcade10-ttt-'+code.trim().toUpperCase());
+      conn.on('open', ()=>{ isHost=false; wireConn(); });
+    });
+    peer.on('error', ()=> connErrorScreen('Комната не найдена или соперник вышел'));
+  }
+  function wireConn(){
+    myMark = isHost?'❌':'⭕'; turn='❌';
+    board=Array(9).fill(''); over=false;
+    conn.on('data', data=>{
+      if(data.type==='move'){ board[data.i]=data.mark; turn = data.mark==='❌'?'⭕':'❌'; renderOnline(); checkOnlineEnd(); }
+    });
+    conn.on('close', ()=>{ if(!over){ over=true; showOverlay('Соперник отключился',''); } });
+    mode='online-play'; renderOnline();
+    setScore('Вы: '+myMark);
+  }
+  function renderOnline(){
+    dom.innerHTML='';
+    dom.appendChild(boardGrid(onlineMove));
+    setHint(over? '' : (turn===myMark? 'Ваш ход' : 'Ход соперника'));
+  }
+  function onlineMove(i){
+    if(over||board[i]||turn!==myMark) return;
+    board[i]=myMark; conn.send({type:'move', i, mark:myMark});
+    turn = myMark==='❌'?'⭕':'❌';
+    renderOnline(); checkOnlineEnd();
+  }
+  function checkOnlineEnd(){
+    const w=winner(board); if(!w) return;
+    over=true;
+    if(w==='draw') showOverlay('Ничья!','');
+    else if(w===myMark) showOverlay('Вы победили! 🎉','');
+    else showOverlay('Соперник победил','');
+  }
+
+  showMenu();
+  return {
+    stop(){ cleanupPeer(); },
+    restart(){
+      if(mode==='bot') startBot();
+      else if(mode==='online-play'){ cleanupPeer(); showOnlineMenu(); }
+      else showMenu();
+    }
+  };
 };
 
 /* ================= 5. MEMORY ================= */
@@ -670,40 +873,67 @@ GAME_MODULES.breakout = function(){
   return { stop(){ cancelAnimationFrame(raf); }, restart(){ cancelAnimationFrame(raf); reset(); } };
 };
 
-/* ================= 8. REFLEX ================= */
-GAME_MODULES.reflex = function(){
-  const dom=makeDom();
-  dom.style.flexDirection='column'; dom.style.gap='14px';
-  const box=document.createElement('div');
-  box.style.width='80%'; box.style.height='60%'; box.style.borderRadius='16px';
-  box.style.display='flex'; box.style.alignItems='center'; box.style.justifyContent='center';
-  box.style.fontSize='20px'; box.style.fontWeight='800'; box.style.cursor='pointer';
-  box.style.background='#22284f'; box.textContent='Тапни, чтобы начать';
-  dom.appendChild(box);
-  let state='idle', t0, best=null, timeoutId;
-  setHint('Дождитесь зелёного экрана и тапните как можно быстрее');
-  function toWait(){
-    state='waiting'; box.style.background='#ff5c6c'; box.textContent='Жди...';
-    const delay=800+Math.random()*1800;
-    timeoutId=setTimeout(()=>{ state='go'; t0=performance.now(); box.style.background='#4ff3d6'; box.style.color='#0b0e1a'; box.textContent='ТАПНИ!'; }, delay);
+/* ================= 8. SPACE SHOOTER ================= */
+GAME_MODULES.shooter = function(){
+  const VW=300, VH=400;
+  const {canvas,ctx}=makeCanvas(VW,VH);
+  setHint('Двигайте палец / мышь — стрельба автоматическая');
+  let ship, bullets, rocks, stars, score, alive, raf, last, shootT, spawnT;
+  function reset(){
+    ship={x:VW/2,y:VH-36,w:22,h:18}; bullets=[]; rocks=[]; score=0; alive=true; shootT=0; spawnT=0;
+    stars=Array.from({length:40},()=>({x:Math.random()*VW,y:Math.random()*VH,r:Math.random()*1.6+.3,s:Math.random()*.6+.2}));
+    setScore('Очки: 0'); last=performance.now(); loop(last);
   }
-  box.onclick=()=>{
-    if(state==='idle'){ toWait(); return; }
-    if(state==='waiting'){ clearTimeout(timeoutId); box.style.background='#22284f'; box.style.color='#f4f6fb'; box.textContent='Рано! Тапни ещё раз'; state='idle'; return; }
-    if(state==='go'){
-      const rt=Math.round(performance.now()-t0);
-      if(best===null||rt<best){ best=rt; }
-      setScore('Лучший: '+best+' мс');
-      box.style.background='#22284f'; box.style.color='#f4f6fb';
-      box.textContent='Реакция: '+rt+' мс · тапни для новой попытки';
-      state='idle';
+  function loop(t){
+    raf=requestAnimationFrame(loop);
+    const dt=Math.min(2,(t-last)/16.67); last=t;
+    if(alive){
+      stars.forEach(s=>{ s.y+=s.s*dt; if(s.y>VH){ s.y=0; s.x=Math.random()*VW; } });
+      shootT-=dt; if(shootT<=0){ shootT=14; bullets.push({x:ship.x,y:ship.y-14}); }
+      bullets.forEach(b=>b.y-=6*dt);
+      bullets=bullets.filter(b=>b.y>-10);
+      spawnT-=dt; if(spawnT<=0){ spawnT=42-Math.min(25,score/3); rocks.push({x:Math.random()*(VW-24)+12,y:-14,r:9+Math.random()*8,vy:1.4+Math.random()*1.6}); }
+      rocks.forEach(r=>r.y+=r.vy*dt);
+      rocks=rocks.filter(r=>{
+        if(r.y-r.r>VH) return false;
+        if(Math.abs(r.x-ship.x)<r.r+10 && Math.abs(r.y-ship.y)<r.r+8){ end(); }
+        return true;
+      });
+      bullets.forEach(b=>{
+        rocks.forEach(r=>{
+          if(r.hit) return;
+          if(Math.hypot(b.x-r.x,b.y-r.y)<r.r+3){ r.hit=true; b.y=-999; score+=5; setScore('Очки: '+score); }
+        });
+      });
+      rocks=rocks.filter(r=>!r.hit);
     }
-  };
-  setScore('Лучший: —');
-  return {
-    stop(){ clearTimeout(timeoutId); },
-    restart(){ clearTimeout(timeoutId); state='idle'; box.style.background='#22284f'; box.style.color='#f4f6fb'; box.textContent='Тапни, чтобы начать'; }
-  };
+    draw();
+  }
+  function end(){ if(!alive) return; alive=false; showOverlay('Корабль разбит','Очки: '+score); }
+  function draw(){
+    ctx.fillStyle='#0b0e24'; ctx.fillRect(0,0,VW,VH);
+    ctx.fillStyle='#ffffff';
+    stars.forEach(s=>{ ctx.globalAlpha=.5+s.r/2; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill(); });
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#ffc24f';
+    rocks.forEach(r=>{ ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,7); ctx.fill(); });
+    ctx.fillStyle='#4ff3d6';
+    bullets.forEach(b=>ctx.fillRect(b.x-1.5,b.y,3,10));
+    ctx.fillStyle='#ff4fa3';
+    ctx.beginPath();
+    ctx.moveTo(ship.x,ship.y-10); ctx.lineTo(ship.x+11,ship.y+9); ctx.lineTo(ship.x,ship.y+4); ctx.lineTo(ship.x-11,ship.y+9);
+    ctx.closePath(); ctx.fill();
+  }
+  function moveTo(clientX){
+    const r=canvas.getBoundingClientRect();
+    const x=(clientX-r.left)/r.width*VW;
+    ship.x=Math.max(14,Math.min(VW-14,x));
+  }
+  function pm(e){ moveTo(e.touches? e.touches[0].clientX : e.clientX); }
+  canvas.addEventListener('touchmove',pm,{passive:true});
+  canvas.addEventListener('mousemove',pm);
+  reset();
+  return { stop(){ cancelAnimationFrame(raf); }, restart(){ cancelAnimationFrame(raf); reset(); } };
 };
 
 /* ================= 9. RUNNER ================= */
@@ -755,51 +985,68 @@ GAME_MODULES.runner = function(){
   };
 };
 
-/* ================= 10. 15-PUZZLE ================= */
-GAME_MODULES.puzzle = function(){
-  const dom=makeDom();
-  const wrap=document.createElement('div');
-  wrap.className='gridwrap'; wrap.style.gridTemplateColumns='repeat(4,1fr)'; wrap.style.gridTemplateRows='repeat(4,1fr)';
-  wrap.style.width='88%'; wrap.style.height='88%';
-  dom.appendChild(wrap);
-  let tiles, moves;
-  function solvedArr(){ return [...Array(15).keys()].map(n=>n+1).concat(0); }
-  function isSolvable(a){
-    let inv=0;
-    const arr=a.filter(v=>v);
-    for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++) if(arr[i]>arr[j]) inv++;
-    const blankRow = Math.floor(a.indexOf(0)/4);
-    return (inv + blankRow) % 2 === 1 ? true : (inv%2===0);
+/* ================= 10. FRUIT CATCH ================= */
+GAME_MODULES.catch = function(){
+  const VW=300, VH=400;
+  const {canvas,ctx}=makeCanvas(VW,VH);
+  setHint('Двигайте палец / мышь — ловите фрукты, объезжайте бомбы 💣');
+  const FRUITS=[['#ff4fa3',6],['#ffc24f',6],['#4ff3d6',6],['#8f7bff',6]];
+  let basket, items, score, lives, alive, raf, last, spawnT;
+  function reset(){
+    basket={x:VW/2,w:52,h:12,y:VH-22}; items=[]; score=0; lives=3; alive=true; spawnT=0;
+    setScore('Очки: 0 · ❤️❤️❤️'); last=performance.now(); loop(last);
   }
-  function shuffle(){
-    let a;
-    do{ a=solvedArr(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } }
-    while(!isSolvable(a) || a.every((v,i)=>v===solvedArr()[i]));
-    return a;
-  }
-  function reset(){ tiles=shuffle(); moves=0; setScore('Ходы: 0'); render(); }
-  function render(){
-    wrap.innerHTML='';
-    tiles.forEach((v,i)=>{
-      const c=document.createElement('div'); c.className='cell'; c.style.fontSize='20px';
-      c.style.background = v? 'linear-gradient(135deg,#2a2f57,#20244a)' : 'transparent';
-      c.textContent = v||'';
-      c.onclick=()=>move(i);
-      wrap.appendChild(c);
-    });
-  }
-  function move(i){
-    const blank=tiles.indexOf(0);
-    const r=Math.floor(i/4), c=i%4, br=Math.floor(blank/4), bc=blank%4;
-    if((Math.abs(r-br)+Math.abs(c-bc))===1){
-      [tiles[i],tiles[blank]]=[tiles[blank],tiles[i]];
-      moves++; setScore('Ходы: '+moves); render();
-      if(tiles.every((v,idx)=>v===solvedArr()[idx])) showOverlay('Собрано! 🎉','Ходы: '+moves);
+  function heartsStr(){ return '❤️'.repeat(Math.max(0,lives)); }
+  function loop(t){
+    raf=requestAnimationFrame(loop);
+    const dt=Math.min(2,(t-last)/16.67); last=t;
+    if(alive){
+      spawnT-=dt;
+      if(spawnT<=0){
+        spawnT=38-Math.min(20,score/6);
+        const bomb=Math.random()<0.22;
+        const f=FRUITS[Math.random()*FRUITS.length|0];
+        items.push({x:Math.random()*(VW-20)+10,y:-12,vy:1.6+Math.random()*1.6+score*0.01,r:bomb?9:f[1],bomb,color:bomb?'#2b2f45':f[0]});
+      }
+      items.forEach(it=>it.y+=it.vy*dt);
+      items=items.filter(it=>{
+        if(it.y-it.r>VH) { if(!it.bomb){ lives--; setScore('Очки: '+score+' · '+heartsStr()); if(lives<=0) end(); } return false; }
+        if(Math.abs(it.x-basket.x)<basket.w/2+it.r && it.y+it.r>basket.y && it.y-it.r<basket.y+basket.h){
+          if(it.bomb){ lives--; setScore('Очки: '+score+' · '+heartsStr()); if(lives<=0) end(); }
+          else { score+=10; setScore('Очки: '+score+' · '+heartsStr()); }
+          return false;
+        }
+        return true;
+      });
     }
+    draw();
   }
-  setHint('Соберите числа по порядку, двигая плитки');
+  function end(){ if(!alive) return; alive=false; showOverlay('Корзина пуста','Очки: '+score); }
+  function draw(){
+    ctx.fillStyle='#101532'; ctx.fillRect(0,0,VW,VH);
+    items.forEach(it=>{
+      ctx.fillStyle=it.color;
+      ctx.beginPath(); ctx.arc(it.x,it.y,it.r,0,7); ctx.fill();
+      if(it.bomb){ ctx.strokeStyle='#ff5c6c'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(it.x,it.y-it.r); ctx.lineTo(it.x+4,it.y-it.r-6); ctx.stroke(); }
+    });
+    ctx.fillStyle='#c76b3d';
+    ctx.beginPath();
+    ctx.moveTo(basket.x-basket.w/2,basket.y);
+    ctx.lineTo(basket.x+basket.w/2,basket.y);
+    ctx.lineTo(basket.x+basket.w/2-6,basket.y+basket.h);
+    ctx.lineTo(basket.x-basket.w/2+6,basket.y+basket.h);
+    ctx.closePath(); ctx.fill();
+  }
+  function moveTo(clientX){
+    const r=canvas.getBoundingClientRect();
+    const x=(clientX-r.left)/r.width*VW;
+    basket.x=Math.max(basket.w/2,Math.min(VW-basket.w/2,x));
+  }
+  function pm(e){ moveTo(e.touches? e.touches[0].clientX : e.clientX); }
+  canvas.addEventListener('touchmove',pm,{passive:true});
+  canvas.addEventListener('mousemove',pm);
   reset();
-  return { stop(){}, restart(){ reset(); } };
+  return { stop(){ cancelAnimationFrame(raf); }, restart(){ cancelAnimationFrame(raf); reset(); } };
 };
 
 </script>
