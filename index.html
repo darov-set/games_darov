@@ -658,31 +658,45 @@ GAME_MODULES.ttt = function(){
       <div style="color:var(--sub);font-size:12.5px">Ожидание соперника…</div>`;
     dom.appendChild(box);
   }
+  const ICE_CONFIG = {iceServers:[
+    {urls:'stun:stun.l.google.com:19302'},
+    {urls:'turn:openrelay.metered.ca:80', username:'openrelayproject', credential:'openrelayproject'},
+    {urls:'turn:openrelay.metered.ca:443', username:'openrelayproject', credential:'openrelayproject'},
+    {urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'}
+  ]};
   function connErrorScreen(msg){
     dom.innerHTML='';
     const box=document.createElement('div');
-    box.style.display='flex'; box.style.flexDirection='column'; box.style.gap='10px'; box.style.alignItems='center'; box.style.textAlign='center';
+    box.style.display='flex'; box.style.flexDirection='column'; box.style.gap='10px'; box.style.alignItems='center'; box.style.textAlign='center'; box.style.padding='0 8px';
     box.innerHTML=`<div style="color:var(--danger);font-weight:700">Не удалось подключиться</div><div style="color:var(--sub);font-size:12.5px">${msg}</div>`;
     dom.appendChild(box);
   }
   function createRoom(){
     dom.innerHTML=''; setHint('← Меню, чтобы отменить');
     roomCode = Math.random().toString(36).substr(2,5).toUpperCase();
-    peer = new Peer('arcade10-ttt-'+roomCode);
+    peer = new Peer('arcade10-ttt-'+roomCode, {config:ICE_CONFIG});
     peer.on('open', ()=> waitingScreen(roomCode));
     peer.on('connection', c=>{ conn=c; isHost=true; wireConn(); });
-    peer.on('error', e=> connErrorScreen('Код занят, попробуйте ещё раз'));
+    peer.on('error', e=> connErrorScreen('Код уже используется — попробуйте создать комнату ещё раз.'));
   }
   function joinRoom(code){
     dom.innerHTML='';
     const box=document.createElement('div'); box.style.textAlign='center'; box.style.color='var(--sub)'; box.textContent='Подключение…';
     dom.appendChild(box);
-    peer = new Peer();
+    let settled=false;
+    const timeoutId=setTimeout(()=>{
+      if(!settled){ settled=true; try{peer.destroy();}catch(e){}
+        connErrorScreen('Соперник не отвечает. Проверьте: он должен быть на экране ожидания с этим кодом; код введён без пробелов; у обоих есть интернет (лучше Wi‑Fi).'); }
+    }, 12000);
+    peer = new Peer(undefined, {config:ICE_CONFIG});
     peer.on('open', ()=>{
-      conn = peer.connect('arcade10-ttt-'+code.trim().toUpperCase());
-      conn.on('open', ()=>{ isHost=false; wireConn(); });
+      conn = peer.connect('arcade10-ttt-'+code.trim().toUpperCase(), {reliable:true});
+      conn.on('open', ()=>{ if(settled) return; settled=true; clearTimeout(timeoutId); isHost=false; wireConn(); });
     });
-    peer.on('error', ()=> connErrorScreen('Комната не найдена или соперник вышел'));
+    peer.on('error', ()=>{
+      if(settled) return; settled=true; clearTimeout(timeoutId);
+      connErrorScreen('Комната не найдена. Убедитесь, что друг создал комнату и код введён верно.');
+    });
   }
   function wireConn(){
     myMark = isHost?'❌':'⭕'; turn='❌';
