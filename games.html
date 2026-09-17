@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ARCADE10</title>
+<style>
+:root{
+  --bg-deep:#0b0e1a;
+  --bg-mid:#141830;
+  --panel:#191d38;
+  --line:rgba(255,255,255,0.08);
+  --text:#f4f6fb;
+  --sub:#9aa1c4;
+  --cyan:#4ff3d6;
+  --magenta:#ff4fa3;
+  --amber:#ffc24f;
+  --violet:#8f7bff;
+  --danger:#ff5c6c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(143,123,255,0.25), transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(79,243,214,0.18), transparent 55%),
+    linear-gradient(180deg, var(--bg-deep), var(--bg-mid) 55%, var(--bg-deep));
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:0 16px 22px;}
+
+/* ---------- HEADER ---------- */
+header.top{
+  padding:22px 2px 10px;
+  display:flex;flex-direction:column;gap:4px;
+}
+.brand{display:flex;align-items:baseline;gap:10px;}
+.brand h1{
+  margin:0;font-size:30px;font-weight:800;letter-spacing:-0.5px;
+  background:linear-gradient(90deg,var(--cyan),var(--violet) 60%,var(--magenta));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.brand .auth{
+  font-size:13px;color:var(--sub);font-weight:600;
+}
+.brand .auth a{color:var(--amber);text-decoration:none;}
+.tag{font-size:14px;color:var(--sub);margin-top:2px;}
+
+/* ---------- MENU GRID ---------- */
+#menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.card{
+  position:relative;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:16px 14px 14px;cursor:pointer;
+  transition:transform .15s ease, background .15s ease;
+  overflow:hidden;
+}
+.card:active{transform:scale(.96);}
+.card .glow{
+  position:absolute;inset:auto -30% -60% auto;width:120px;height:120px;
+  border-radius:50%;filter:blur(28px);opacity:.35;pointer-events:none;
+}
+.card .ico{font-size:30px;display:block;margin-bottom:10px;}
+.card h3{margin:0 0 4px;font-size:15px;font-weight:700;}
+.card p{margin:0;font-size:12px;color:var(--sub);line-height:1.35;}
+.card .bar{position:absolute;left:0;top:0;height:3px;width:100%;}
+
+/* ---------- GAME VIEW ---------- */
+#gameView{display:none;flex-direction:column;flex:1;padding-top:14px;}
+.gtop{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.backBtn{
+  background:var(--panel);border:1px solid var(--line);color:var(--text);
+  border-radius:10px;padding:8px 12px;font-size:14px;cursor:pointer;font-weight:700;
+}
+.gtitle{font-size:17px;font-weight:800;flex:1;}
+.gscore{font-size:13px;color:var(--amber);font-weight:700;white-space:nowrap;}
+
+.stage{
+  position:relative;width:100%;background:var(--panel);border:1px solid var(--line);
+  border-radius:18px;overflow:hidden;
+  aspect-ratio:3/4;
+  display:flex;align-items:center;justify-content:center;
+  touch-action:none;
+  user-select:none;
+}
+.stage canvas{display:block;width:100%;height:100%;}
+.hint{margin-top:10px;font-size:12.5px;color:var(--sub);text-align:center;}
+
+.overlay{
+  position:absolute;inset:0;background:rgba(11,14,26,0.86);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  text-align:center;padding:20px;z-index:5;
+}
+.overlay.show{display:flex;}
+.overlay h2{margin:0;font-size:22px;}
+.overlay p{margin:0;color:var(--sub);font-size:14px;}
+.btn{
+  background:linear-gradient(90deg,var(--cyan),var(--violet));
+  color:#0b0e1a;border:none;border-radius:12px;padding:11px 22px;
+  font-weight:800;font-size:14px;cursor:pointer;
+}
+
+/* generic DOM-grid game styles */
+.gridwrap{display:grid;gap:8px;width:88%;height:88%;}
+.cell{
+  background:rgba(255,255,255,0.05);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;cursor:pointer;user-select:none;
+}
+
+footer.credit{
+  text-align:center;color:var(--sub);font-size:12px;margin-top:20px;padding-top:10px;
+  border-top:1px solid var(--line);
+}
+footer.credit a{color:var(--cyan);text-decoration:none;font-weight:700;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="top">
+    <div class="brand">
+      <h1>ARCADE10</h1>
+      <span class="auth">by <a href="https://t.me/TheDarov" target="_blank">@TheDarov</a></span>
+    </div>
+    <div class="tag">10 игр в одном мини-приложении</div>
+  </header>
+
+  <div id="menu"></div>
+
+  <div id="gameView">
+    <div class="gtop">
+      <button class="backBtn" onclick="goMenu()">← Меню</button>
+      <div class="gtitle" id="gTitle"></div>
+      <div class="gscore" id="gScore"></div>
+    </div>
+    <div class="stage" id="stage">
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">Игра окончена</h2>
+        <p id="ovText"></p>
+        <button class="btn" id="ovBtn" onclick="restartCurrent()">Ещё раз</button>
+      </div>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <footer class="credit">Сделано <a href="https://t.me/TheDarov" target="_blank">@TheDarov</a> · ARCADE10 mini app</footer>
+</div>
+
+<script>
+/* ============ TELEGRAM WEBAPP (optional, safe if absent) ============ */
+try{
+  if(window.Telegram && window.Telegram.WebApp){
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+  }
+}catch(e){}
+
+/* ============ APP SHELL ============ */
+const GAMES = [
+  {id:'snake',   icon:'🐍', name:'Змейка',        desc:'Классика с ростом и ускорением', color:'--cyan'},
+  {id:'2048',    icon:'🔢', name:'2048',           desc:'Собери плитку 2048', color:'--amber'},
+  {id:'flappy',  icon:'🐤', name:'Флаппи Берд',    desc:'Лети между труб', color:'--magenta'},
+  {id:'ttt',     icon:'❌', name:'Крестики-нолики',desc:'Против умного бота', color:'--violet'},
+  {id:'memory',  icon:'🧠', name:'Память',         desc:'Найди пары карточек', color:'--cyan'},
+  {id:'mole',    icon:'🔨', name:'Крот',           desc:'Успей ударить крота', color:'--amber'},
+  {id:'breakout',icon:'🧱', name:'Арканоид',       desc:'Разбей все кирпичи', color:'--magenta'},
+  {id:'reflex',  icon:'⚡', name:'Реакция',        desc:'Проверь скорость реакции', color:'--violet'},
+  {id:'runner',  icon:'🦖', name:'Раннер',         desc:'Прыгай через препятствия', color:'--cyan'},
+  {id:'puzzle',  icon:'🧩', name:'Пятнашки',       desc:'Собери числа по порядку', color:'--amber'},
+];
+
+const menuEl = document.getElementById('menu');
+GAMES.forEach(g=>{
+  const c = document.createElement('div');
+  c.className='card';
+  c.onclick=()=>openGame(g.id);
+  c.innerHTML = `
+    <div class="bar" style="background:var(${g.color})"></div>
+    <div class="glow" style="background:var(${g.color})"></div>
+    <span class="ico">${g.icon}</span>
+    <h3>${g.name}</h3>
+    <p>${g.desc}</p>`;
+  menuEl.appendChild(c);
+});
+
+let currentGame = null; // {stop(), restart()}
+const stage = document.getElementById('stage');
+const overlay = document.getElementById('overlay');
+
+function openGame(id){
+  document.getElementById('menu').parentElement.querySelector('#menu').style.display='none';
+  document.querySelector('header.top').style.display='none';
+  document.getElementById('gameView').style.display='flex';
+  const g = GAMES.find(x=>x.id===id);
+  document.getElementById('gTitle').textContent = g.icon+' '+g.name;
+  launch(id);
+}
+function goMenu(){
+  if(currentGame && currentGame.stop) currentGame.stop();
+  currentGame=null;
+  overlay.classList.remove('show');
+  document.getElementById('gameView').style.display='none';
+  document.getElementById('menu').style.display='grid';
+  document.querySelector('header.top').style.display='flex';
+  clearStage();
+}
+function clearStage(){
+  [...stage.children].forEach(ch=>{ if(ch.id!=='overlay') ch.remove(); });
+}
+function setScore(t){ document.getElementById('gScore').textContent=t||''; }
+function setHint(t){ document.getElementById('hint').textContent=t||''; }
+function showOverlay(title,text,btnLabel){
+  document.getElementById('ovTitle').textContent=title;
+  document.getElementById('ovText').textContent=text||'';
+  document.getElementById('ovBtn').textContent=btnLabel||'Ещё раз';
+  overlay.classList.add('show');
+}
+function hideOverlay(){ overlay.classList.remove('show'); }
+function restartCurrent(){ hideOverlay(); if(currentGame && currentGame.restart) currentGame.restart(); }
+
+function launch(id){
+  clearStage(); hideOverlay(); setScore(''); setHint('');
+  if(currentGame && currentGame.stop) currentGame.stop();
+  currentGame = GAME_MODULES[id]();
+}
+
+/* helper: create a canvas filling the stage with crisp resolution */
+function makeCanvas(vw, vh){
+  const canvas=document.createElement('canvas');
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const rect = stage.getBoundingClientRect();
+  const scale = Math.min(rect.width/vw, rect.height/vh);
+  canvas.width = vw*dpr; canvas.height = vh*dpr;
+  canvas.style.width = (vw*scale)+'px';
+  canvas.style.height = (vh*scale)+'px';
+  stage.insertBefore(canvas, overlay);
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  return {canvas, ctx, vw, vh};
+}
+function makeDom(){
+  const div=document.createElement('div');
+  div.style.position='absolute'; div.style.inset='0';
+  div.style.display='flex'; div.style.alignItems='center'; div.style.justifyContent='center';
+  stage.insertBefore(div, overlay);
+  return div;
+}
+
+const GAME_MODULES = {};
+
+/* ================= 1. SNAKE ================= */
+GAME_MODULES.snake = function(){
+  const N=16, VW=320, VH=320, CELL=VW/N;
+  const {canvas,ctx} = makeCanvas(VW,VH);
+  setHint('Свайп или стрелки — управление');
+  let snake, dir, nextDir, food, score, timer, alive, speed;
+  function reset(){
+    snake=[{x:8,y:8},{x:7,y:8},{x:6,y:8}];
+    dir={x:1,y:0}; nextDir=dir; score=0; alive=true; speed=140;
+    placeFood(); setScore('Очки: 0'); loop();
+  }
+  function placeFood(){
+    do{ food={x:(Math.random()*N|0), y:(Math.random()*N|0)}; }
+    while(snake.some(s=>s.x===food.x&&s.y===food.y));
+  }
+  function loop(){
+    if(!alive) return;
+    dir=nextDir;
+    const head={x:snake[0].x+dir.x, y:snake[0].y+dir.y};
+    if(head.x<0||head.y<0||head.x>=N||head.y>=N||snake.some(s=>s.x===head.x&&s.y===head.y)){
+      alive=false; showOverlay('Змейка врезалась','Очки: '+score); return;
+    }
+    snake.unshift(head);
+    if(head.x===food.x&&head.y===food.y){ score++; setScore('Очки: '+score); placeFood(); speed=Math.max(70,speed-3);}
+    else snake.pop();
+    draw();
+    timer=setTimeout(loop, speed);
+  }
+  function draw(){
+    ctx.fillStyle='#0f1330'; ctx.fillRect(0,0,VW,VH);
+    ctx.fillStyle='#ff4fa3';
+    ctx.beginPath(); ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, CELL*0.35,0,7); ctx.fill();
+    snake.forEach((s,i)=>{
+      ctx.fillStyle = i===0 ? '#4ff3d6' : `rgba(79,243,214,${0.85-i*0.03})`;
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,4) : ctx.rect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2);
+      ctx.fill();
+    });
+  }
+  function setDir(nx,ny){ if(nx===-dir.x&&ny===-dir.y) return; nextDir={x:nx,y:ny}; }
+  function key(e){
+    if(e.key==='ArrowUp') setDir(0,-1);
+    else if(e.key==='ArrowDown') setDir(0,1);
+    else if(e.key==='ArrowLeft') setDir(-1,0);
+    else if(e.key==='ArrowRight') setDir(1,0);
+  }
+  let sx,sy;
+  function ts(e){ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }
+  function te(e){
+    const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy;
+    if(Math.abs(dx)>Math.abs(dy)) setDir(dx>0?1:-1,0); else setDir(0,dy>0?1:-1);
+  }
+  window.addEventListener('keydown',key);
+  canvas.addEventListener('touchstart',ts);
+  canvas.addEventListener('touchend',te);
+  reset();
+  return {
+    stop(){ clearTimeout(timer); window.removeEventListener('keydown',key); },
+    restart(){ clearTimeout(timer); reset(); }
+  };
+};
+
+/* ================= 2. 2048 ================= */
+GAME_MODULES['2048'] = function(){
+  const dom = makeDom();
+  dom.style.flexDirection='column';
+  const wrap=document.createElement('div');
+  wrap.className='gridwrap';
+  wrap.style.gridTemplateColumns='repeat(4,1fr)';
+  wrap.style.gridTemplateRows='repeat(4,1fr)';
+  wrap.style.width='92%'; wrap.style.height='92%';
+  dom.appendChild(wrap);
+  const COLORS={2:'#22284f',4:'#242a5a',8:'#4ff3d6',16:'#38e2c4',32:'#ffc24f',64:'#ffab3d',128:'#ff8fbf',256:'#ff4fa3',512:'#c76bff',1024:'#8f7bff',2048:'#4fd1ff'};
+  let grid, score;
+  function reset(){
+    grid=Array.from({length:4},()=>Array(4).fill(0));
+    score=0; addTile(); addTile(); setScore('Очки: 0'); render();
+  }
+  function addTile(){
+    const empty=[]; grid.forEach((row,y)=>row.forEach((v,x)=>{if(!v)empty.push([x,y]);}));
+    if(!empty.length) return;
+    const [x,y]=empty[Math.random()*empty.length|0];
+    grid[y][x]=Math.random()<0.9?2:4;
+  }
+  function render(){
+    wrap.innerHTML='';
+    grid.forEach(row=>row.forEach(v=>{
+      const c=document.createElement('div'); c.className='cell';
+      c.style.fontSize= v>512?'18px':'22px';
+      c.style.background = v? (COLORS[v]||'#4fd1ff') : 'rgba(255,255,255,0.05)';
+      c.style.color = v>4 ? '#0b0e1a' : '#f4f6fb';
+      c.textContent = v||'';
+      wrap.appendChild(c);
+    }));
+  }
+  function slide(row){
+    let arr=row.filter(v=>v);
+    for(let i=0;i<arr.length-1;i++){
+      if(arr[i]===arr[i+1]){ arr[i]*=2; score+=arr[i]; arr.splice(i+1,1); }
+    }
+    while(arr.length<4) arr.push(0);
+    return arr;
+  }
+  function rotate(g){ const n=g.map((r,y)=>g.map(row=>row[y]).reverse()); return n; }
+  function move(dir){
+    let g=grid.map(r=>r.slice());
+    let rot=0;
+    if(dir==='up') rot=3; else if(dir==='right') rot=2; else if(dir==='down') rot=1;
+    for(let i=0;i<rot;i++) g=rotate(g);
+    const before=JSON.stringify(g);
+    g=g.map(slide);
+    let g2=g;
+    for(let i=0;i<(4-rot)%4;i++) g2=rotate(g2);
+    if(JSON.stringify(g)!==before || true){}
+    const changed = JSON.stringify(g2)!==JSON.stringify(grid);
+    grid=g2;
+    if(changed){ addTile(); setScore('Очки: '+score); render();
+      if(!movesLeft()){ showOverlay('Ходов нет','Очки: '+score); }
+    }
+  }
+  function movesLeft(){
+    for(let y=0;y<4;y++)for(let x=0;x<4;x++){
+      if(!grid[y][x]) return true;
+      if(x<3&&grid[y][x]===grid[y][x+1]) return true;
+      if(y<3&&grid[y][x]===grid[y+1][x]) return true;
+    }
+    return false;
+  }
+  function key(e){
+    if(e.key==='ArrowUp') move('up');
+    else if(e.key==='ArrowDown') move('down');
+    else if(e.key==='ArrowLeft') move('left');
+    else if(e.key==='ArrowRight') move('right');
+  }
+  let sx,sy;
+  function ts(e){ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }
+  function te(e){
+    const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<20) return;
+    if(Math.abs(dx)>Math.abs(dy)) move(dx>0?'right':'left'); else move(dy>0?'down':'up');
+  }
+  window.addEventListener('keydown',key);
+  stage.addEventListener('touchstart',ts);
+  stage.addEventListener('touchend',te);
+  setHint('Свайп или стрелки — сдвиг плиток');
+  reset();
+  return {
+    stop(){ window.removeEventListener('keydown',key); stage.removeEventListener('touchstart',ts); stage.removeEventListener('touchend',te); },
+    restart(){ reset(); }
+  };
+};
+
+/* ================= 3. FLAPPY ================= */
+GAME_MODULES.flappy = function(){
+  const VW=300, VH=400;
+  const {canvas,ctx}=makeCanvas(VW,VH);
+  setHint('Тап / пробел — взмах крыльями');
+  let bird, pipes, score, alive, vy, raf, spawnT;
+  const G=0.35, FLAP=-6, GAP=110, PW=46, SPD=2.4;
+  function reset(){
+    bird={x:70,y:VH/2,r:12}; vy=0; pipes=[]; score=0; alive=true; spawnT=0;
+    setScore('Очки: 0'); last=performance.now(); loop(last);
+  }
+  let last;
+  function flap(){ if(alive) vy=FLAP; }
+  function loop(t){
+    raf=requestAnimationFrame(loop);
+    const dt=Math.min(2,(t-last)/16.67); last=t;
+    if(alive){
+      vy+=G*dt; bird.y+=vy*dt;
+      spawnT-=dt;
+      if(spawnT<=0){ spawnT=95; const gy=60+Math.random()*(VH-120-GAP);
+        pipes.push({x:VW+20, gy}); }
+      pipes.forEach(p=>p.x-=SPD*dt);
+      while(pipes.length && pipes[0].x<-PW) { pipes.shift(); score++; setScore('Очки: '+score); }
+      pipes.forEach(p=>{
+        if(!p.scored && p.x+PW<bird.x){ p.scored=true; }
+      });
+      if(bird.y-bird.r<0||bird.y+bird.r>VH) end();
+      pipes.forEach(p=>{
+        if(bird.x+bird.r>p.x && bird.x-bird.r<p.x+PW){
+          if(bird.y-bird.r<p.gy || bird.y+bird.r>p.gy+GAP) end();
+        }
+      });
+    }
+    draw();
+  }
+  function end(){ if(!alive) return; alive=false; showOverlay('Разбился!','Очки: '+score); }
+  function draw(){
+    ctx.fillStyle='#0f1330'; ctx.fillRect(0,0,VW,VH);
+    ctx.fillStyle='#4ff3d6';
+    pipes.forEach(p=>{
+      ctx.fillRect(p.x,0,PW,p.gy);
+      ctx.fillRect(p.x,p.gy+GAP,PW,VH-p.gy-GAP);
+    });
+    ctx.fillStyle='#ffc24f';
+    ctx.beginPath(); ctx.arc(bird.x,bird.y,bird.r,0,7); ctx.fill();
+  }
+  function inp(e){ e.preventDefault(); flap(); }
+  canvas.addEventListener('pointerdown',inp);
+  function key(e){ if(e.code==='Space') flap(); }
+  window.addEventListener('keydown',key);
+  reset();
+  return {
+    stop(){ cancelAnimationFrame(raf); window.removeEventListener('keydown',key); },
+    restart(){ cancelAnimationFrame(raf); reset(); }
+  };
+};
+
+/* ================= 4. TIC TAC TOE ================= */
+GAME_MODULES.ttt = function(){
+  const dom=makeDom();
+  const wrap=document.createElement('div');
+  wrap.className='gridwrap'; wrap.style.gridTemplateColumns='repeat(3,1fr)'; wrap.style.gridTemplateRows='repeat(3,1fr)';
+  wrap.style.width='80%'; wrap.style.height='80%';
+  dom.appendChild(wrap);
+  let board, over;
+  const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  function reset(){ board=Array(9).fill(''); over=false; setScore('Вы: ❌  Бот: ⭕'); render(); }
+  function render(){
+    wrap.innerHTML='';
+    board.forEach((v,i)=>{
+      const c=document.createElement('div'); c.className='cell'; c.style.fontSize='34px';
+      c.textContent=v;
+      c.style.color = v==='❌'?'#4ff3d6':'#ff4fa3';
+      c.onclick=()=>playerMove(i);
+      wrap.appendChild(c);
+    });
+  }
+  function winner(b){
+    for(const [a,b1,c] of LINES) if(b[a]&&b[a]===b[b1]&&b[a]===b[c]) return b[a];
+    return b.includes('')?null:'draw';
+  }
+  function playerMove(i){
+    if(over||board[i]) return;
+    board[i]='❌'; render();
+    const w=winner(board); if(w){ finish(w); return; }
+    setTimeout(botMove,300);
+  }
+  function botMove(){
+    if(over) return;
+    const best=minimax(board,'⭕').index;
+    board[best]='⭕'; render();
+    const w=winner(board); if(w) finish(w);
+  }
+  function finish(w){
+    over=true;
+    if(w==='draw') showOverlay('Ничья!','');
+    else if(w==='❌') showOverlay('Вы победили! 🎉','');
+    else showOverlay('Бот победил','Попробуй ещё раз');
+  }
+  function minimax(b,player){
+    const w=winner(b);
+    if(w==='❌') return {score:-10};
+    if(w==='⭕') return {score:10};
+    if(w==='draw') return {score:0};
+    const moves=[];
+    b.forEach((v,i)=>{ if(!v){
+      const nb=b.slice(); nb[i]=player;
+      const res=minimax(nb, player==='⭕'?'❌':'⭕');
+      moves.push({index:i, score:res.score});
+    }});
+    if(player==='⭕') return moves.reduce((a,c)=>c.score>a.score?c:a);
+    return moves.reduce((a,c)=>c.score<a.score?c:a);
+  }
+  setHint('Играйте крестиками против бота');
+  reset();
+  return { stop(){}, restart(){ reset(); } };
+};
+
+/* ================= 5. MEMORY ================= */
+GAME_MODULES.memory = function(){
+  const dom=makeDom();
+  const wrap=document.createElement('div');
+  wrap.className='gridwrap'; wrap.style.gridTemplateColumns='repeat(4,1fr)'; wrap.style.gridTemplateRows='repeat(3,1fr)';
+  wrap.style.width='92%'; wrap.style.height='92%';
+  dom.appendChild(wrap);
+  const EMO=['🍒','🍋','🍇','🍉','⭐','🔥','🎈','⚡','🍒','🍋','🍇','🍉','⭐','🔥','🎈','⚡'];
+  let cards, flipped, matched, moves, lock;
+  function reset(){
+    const set=['🍒','🍋','🍇','🍉','⭐','🔥'];
+    cards=[...set,...set].sort(()=>Math.random()-0.5).map(v=>({v,open:false,done:false}));
+    flipped=[]; matched=0; moves=0; lock=false;
+    setScore('Ходы: 0'); render();
+  }
+  function render(){
+    wrap.innerHTML='';
+    cards.forEach((c,i)=>{
+      const el=document.createElement('div'); el.className='cell'; el.style.fontSize='24px';
+      el.style.background = c.done? 'rgba(79,243,214,0.25)' : (c.open? '#2a2f57':'rgba(255,255,255,0.05)');
+      el.textContent = (c.open||c.done)? c.v : '❔';
+      el.onclick=()=>flip(i);
+      wrap.appendChild(el);
+    });
+  }
+  function flip(i){
+    if(lock||cards[i].open||cards[i].done) return;
+    cards[i].open=true; flipped.push(i); render();
+    if(flipped.length===2){
+      lock=true; moves++; setScore('Ходы: '+moves);
+      const [a,b]=flipped;
+      if(cards[a].v===cards[b].v){
+        cards[a].done=cards[b].done=true; matched++;
+        flipped=[]; lock=false; render();
+        if(matched===6) showOverlay('Собрано! 🎉','Ходы: '+moves);
+      } else {
+        setTimeout(()=>{ cards[a].open=cards[b].open=false; flipped=[]; lock=false; render(); },700);
+      }
+    }
+  }
+  setHint('Найдите все пары за минимум ходов');
+  reset();
+  return { stop(){}, restart(){ reset(); } };
+};
+
+/* ================= 6. WHACK-A-MOLE ================= */
+GAME_MODULES.mole = function(){
+  const dom=makeDom();
+  const wrap=document.createElement('div');
+  wrap.className='gridwrap'; wrap.style.gridTemplateColumns='repeat(3,1fr)'; wrap.style.gridTemplateRows='repeat(3,1fr)';
+  wrap.style.width='88%'; wrap.style.height='88%';
+  dom.appendChild(wrap);
+  let holes, active, score, timeLeft, moleT, clockT, running;
+  function reset(){
+    holes=Array(9).fill(false); score=0; timeLeft=30; running=true;
+    setScore('Очки: 0 · '+timeLeft+'с'); render(); popLoop(); tick();
+  }
+  function render(){
+    wrap.innerHTML='';
+    holes.forEach((on,i)=>{
+      const c=document.createElement('div'); c.className='cell'; c.style.fontSize='30px';
+      c.textContent= on? '🐹':'';
+      c.style.background= on? 'rgba(255,194,79,0.25)':'rgba(255,255,255,0.05)';
+      c.onclick=()=>hit(i);
+      wrap.appendChild(c);
+    });
+  }
+  function hit(i){
+    if(!running||!holes[i]) return;
+    holes[i]=false; score++; setScore('Очки: '+score+' · '+timeLeft+'с'); render();
+  }
+  function popLoop(){
+    if(!running) return;
+    holes=holes.map(()=>false);
+    const i=Math.random()*9|0; holes[i]=true; render();
+    moleT=setTimeout(popLoop, 500+Math.random()*450);
+  }
+  function tick(){
+    if(!running) return;
+    timeLeft--; setScore('Очки: '+score+' · '+timeLeft+'с');
+    if(timeLeft<=0){ running=false; clearTimeout(moleT); showOverlay('Время вышло!','Очки: '+score); return; }
+    clockT=setTimeout(tick,1000);
+  }
+  setHint('Тапайте по крысу, пока не кончилось время');
+  reset();
+  return {
+    stop(){ running=false; clearTimeout(moleT); clearTimeout(clockT); },
+    restart(){ running=false; clearTimeout(moleT); clearTimeout(clockT); reset(); }
+  };
+};
+
+/* ================= 7. BREAKOUT ================= */
+GAME_MODULES.breakout = function(){
+  const VW=300, VH=400;
+  const {canvas,ctx}=makeCanvas(VW,VH);
+  setHint('Двигайте палец / мышь по горизонтали');
+  let paddle, ball, bricks, score, alive, raf, last;
+  const PW=64, PH=10, BR_ROWS=4, BR_COLS=6;
+  function reset(){
+    paddle={x:VW/2-PW/2,y:VH-24,w:PW,h:PH};
+    ball={x:VW/2,y:VH-40,r:6,vx:2.4,vy:-3};
+    bricks=[];
+    const bw=VW/BR_COLS;
+    for(let r=0;r<BR_ROWS;r++)for(let c=0;c<BR_COLS;c++)
+      bricks.push({x:c*bw+2,y:r*18+30,w:bw-4,h:14,alive:true,
+        color:['#4ff3d6','#ffc24f','#ff4fa3','#8f7bff'][r%4]});
+    score=0; alive=true; setScore('Очки: 0'); last=performance.now(); loop(last);
+  }
+  function loop(t){
+    raf=requestAnimationFrame(loop);
+    const dt=Math.min(2,(t-last)/16.67); last=t;
+    if(alive){
+      ball.x+=ball.vx*dt; ball.y+=ball.vy*dt;
+      if(ball.x<ball.r||ball.x>VW-ball.r) ball.vx*=-1;
+      if(ball.y<ball.r) ball.vy*=-1;
+      if(ball.y+ball.r>paddle.y && ball.y-ball.r<paddle.y+paddle.h && ball.x>paddle.x && ball.x<paddle.x+paddle.w){
+        ball.vy=-Math.abs(ball.vy);
+        const hit=(ball.x-(paddle.x+paddle.w/2))/(paddle.w/2);
+        ball.vx = hit*3.4;
+      }
+      if(ball.y>VH+20){ alive=false; showOverlay('Мяч упал','Очки: '+score); }
+      bricks.forEach(b=>{
+        if(!b.alive) return;
+        if(ball.x>b.x&&ball.x<b.x+b.w&&ball.y-ball.r<b.y+b.h&&ball.y+ball.r>b.y){
+          b.alive=false; ball.vy*=-1; score+=10; setScore('Очки: '+score);
+        }
+      });
+      if(bricks.every(b=>!b.alive)){ alive=false; showOverlay('Победа! 🎉','Очки: '+score); }
+    }
+    draw();
+  }
+  function draw(){
+    ctx.fillStyle='#0f1330'; ctx.fillRect(0,0,VW,VH);
+    bricks.forEach(b=>{ if(b.alive){ ctx.fillStyle=b.color; ctx.fillRect(b.x,b.y,b.w,b.h); }});
+    ctx.fillStyle='#f4f6fb'; ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+    ctx.fillStyle='#4ff3d6'; ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,7); ctx.fill();
+  }
+  function moveTo(clientX){
+    const r=canvas.getBoundingClientRect();
+    const x=(clientX-r.left)/r.width*VW;
+    paddle.x = Math.max(0, Math.min(VW-paddle.w, x-paddle.w/2));
+  }
+  function pm(e){ moveTo(e.touches? e.touches[0].clientX : e.clientX); }
+  canvas.addEventListener('touchmove',pm,{passive:true});
+  canvas.addEventListener('mousemove',pm);
+  reset();
+  return { stop(){ cancelAnimationFrame(raf); }, restart(){ cancelAnimationFrame(raf); reset(); } };
+};
+
+/* ================= 8. REFLEX ================= */
+GAME_MODULES.reflex = function(){
+  const dom=makeDom();
+  dom.style.flexDirection='column'; dom.style.gap='14px';
+  const box=document.createElement('div');
+  box.style.width='80%'; box.style.height='60%'; box.style.borderRadius='16px';
+  box.style.display='flex'; box.style.alignItems='center'; box.style.justifyContent='center';
+  box.style.fontSize='20px'; box.style.fontWeight='800'; box.style.cursor='pointer';
+  box.style.background='#22284f'; box.textContent='Тапни, чтобы начать';
+  dom.appendChild(box);
+  let state='idle', t0, best=null, timeoutId;
+  setHint('Дождитесь зелёного экрана и тапните как можно быстрее');
+  function toWait(){
+    state='waiting'; box.style.background='#ff5c6c'; box.textContent='Жди...';
+    const delay=800+Math.random()*1800;
+    timeoutId=setTimeout(()=>{ state='go'; t0=performance.now(); box.style.background='#4ff3d6'; box.style.color='#0b0e1a'; box.textContent='ТАПНИ!'; }, delay);
+  }
+  box.onclick=()=>{
+    if(state==='idle'){ toWait(); return; }
+    if(state==='waiting'){ clearTimeout(timeoutId); box.style.background='#22284f'; box.style.color='#f4f6fb'; box.textContent='Рано! Тапни ещё раз'; state='idle'; return; }
+    if(state==='go'){
+      const rt=Math.round(performance.now()-t0);
+      if(best===null||rt<best){ best=rt; }
+      setScore('Лучший: '+best+' мс');
+      box.style.background='#22284f'; box.style.color='#f4f6fb';
+      box.textContent='Реакция: '+rt+' мс · тапни для новой попытки';
+      state='idle';
+    }
+  };
+  setScore('Лучший: —');
+  return {
+    stop(){ clearTimeout(timeoutId); },
+    restart(){ clearTimeout(timeoutId); state='idle'; box.style.background='#22284f'; box.style.color='#f4f6fb'; box.textContent='Тапни, чтобы начать'; }
+  };
+};
+
+/* ================= 9. RUNNER ================= */
+GAME_MODULES.runner = function(){
+  const VW=320, VH=320;
+  const {canvas,ctx}=makeCanvas(VW,VH);
+  setHint('Тап / пробел — прыжок');
+  const GROUND=VH-40;
+  let dino, obstacles, vy, speed, score, alive, raf, last, spawnT;
+  function reset(){
+    dino={x:36,y:GROUND-24,w:22,h:24}; vy=0; obstacles=[]; speed=3.4; score=0; alive=true; spawnT=60;
+    setScore('Очки: 0'); last=performance.now(); loop(last);
+  }
+  function jump(){ if(alive && dino.y>=GROUND-dino.h-0.5) vy=-8; }
+  function loop(t){
+    raf=requestAnimationFrame(loop);
+    const dt=Math.min(2,(t-last)/16.67); last=t;
+    if(alive){
+      vy+=0.42*dt; dino.y+=vy*dt;
+      if(dino.y>GROUND-dino.h){ dino.y=GROUND-dino.h; vy=0; }
+      speed+=0.0009*dt; score+=dt*0.12|0 ? 1:0;
+      spawnT-=dt;
+      if(spawnT<=0){ spawnT=55+Math.random()*45; obstacles.push({x:VW+10,w:14+Math.random()*10,h:20+Math.random()*20}); }
+      obstacles.forEach(o=>o.x-=speed*dt);
+      while(obstacles.length && obstacles[0].x<-30){ obstacles.shift(); score+=5; }
+      setScore('Очки: '+Math.floor(score));
+      obstacles.forEach(o=>{
+        if(dino.x+dino.w>o.x && dino.x<o.x+o.w && dino.y+dino.h>GROUND-o.h){ end(); }
+      });
+    }
+    draw();
+  }
+  function end(){ if(!alive) return; alive=false; showOverlay('Столкновение!','Очки: '+Math.floor(score)); }
+  function draw(){
+    ctx.fillStyle='#0f1330'; ctx.fillRect(0,0,VW,VH);
+    ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.moveTo(0,GROUND); ctx.lineTo(VW,GROUND); ctx.stroke();
+    ctx.fillStyle='#4ff3d6'; ctx.fillRect(dino.x,dino.y,dino.w,dino.h);
+    ctx.fillStyle='#ff4fa3';
+    obstacles.forEach(o=> ctx.fillRect(o.x,GROUND-o.h,o.w,o.h));
+  }
+  function inp(e){ e.preventDefault(); jump(); }
+  canvas.addEventListener('pointerdown',inp);
+  function key(e){ if(e.code==='Space') jump(); }
+  window.addEventListener('keydown',key);
+  reset();
+  return {
+    stop(){ cancelAnimationFrame(raf); window.removeEventListener('keydown',key); },
+    restart(){ cancelAnimationFrame(raf); reset(); }
+  };
+};
+
+/* ================= 10. 15-PUZZLE ================= */
+GAME_MODULES.puzzle = function(){
+  const dom=makeDom();
+  const wrap=document.createElement('div');
+  wrap.className='gridwrap'; wrap.style.gridTemplateColumns='repeat(4,1fr)'; wrap.style.gridTemplateRows='repeat(4,1fr)';
+  wrap.style.width='88%'; wrap.style.height='88%';
+  dom.appendChild(wrap);
+  let tiles, moves;
+  function solvedArr(){ return [...Array(15).keys()].map(n=>n+1).concat(0); }
+  function isSolvable(a){
+    let inv=0;
+    const arr=a.filter(v=>v);
+    for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++) if(arr[i]>arr[j]) inv++;
+    const blankRow = Math.floor(a.indexOf(0)/4);
+    return (inv + blankRow) % 2 === 1 ? true : (inv%2===0);
+  }
+  function shuffle(){
+    let a;
+    do{ a=solvedArr(); for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; } }
+    while(!isSolvable(a) || a.every((v,i)=>v===solvedArr()[i]));
+    return a;
+  }
+  function reset(){ tiles=shuffle(); moves=0; setScore('Ходы: 0'); render(); }
+  function render(){
+    wrap.innerHTML='';
+    tiles.forEach((v,i)=>{
+      const c=document.createElement('div'); c.className='cell'; c.style.fontSize='20px';
+      c.style.background = v? 'linear-gradient(135deg,#2a2f57,#20244a)' : 'transparent';
+      c.textContent = v||'';
+      c.onclick=()=>move(i);
+      wrap.appendChild(c);
+    });
+  }
+  function move(i){
+    const blank=tiles.indexOf(0);
+    const r=Math.floor(i/4), c=i%4, br=Math.floor(blank/4), bc=blank%4;
+    if((Math.abs(r-br)+Math.abs(c-bc))===1){
+      [tiles[i],tiles[blank]]=[tiles[blank],tiles[i]];
+      moves++; setScore('Ходы: '+moves); render();
+      if(tiles.every((v,idx)=>v===solvedArr()[idx])) showOverlay('Собрано! 🎉','Ходы: '+moves);
+    }
+  }
+  setHint('Соберите числа по порядку, двигая плитки');
+  reset();
+  return { stop(){}, restart(){ reset(); } };
+};
+
+</script>
+</body>
+</html>
