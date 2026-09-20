@@ -688,7 +688,7 @@ footer.credit a{color:var(--gold-2);}
     <div class="admin-box">
       <h3>🎮 Управление играми</h3>
       <div class="warn-note" id="localWarn" style="display:none">
-        ⚠️ Сервер не подключён (пустой <b>API_URL</b>) — закрытие игр и баланс работают только на этом устройстве. Запустите <b>bot.py</b> и впишите адрес сервера в <b>API_URL</b>, чтобы игры закрывались у всех игроков.
+        ⚠️ Сервер не подключён — баланс и закрытие игр работают только на этом устройстве. Запустите <b>bot.py</b> и впишите его HTTPS-адрес в <b>SERVER_URL</b> в этом файле (или откройте приложение с <b>?api=https://адрес</b>), чтобы монеты и замки работали у всех игроков.
       </div>
       <div class="admin-note" style="margin:-2px 0 10px">Выберите срок и нажмите на игру — она закроется в мини-приложении у всех игроков. Повторное нажатие открывает её.</div>
       <div class="chips" id="durChips"></div>
@@ -860,14 +860,26 @@ function haptic(kind){
    баланс и закрытые игры хранятся только в этом браузере
    (для предпросмотра админки откройте страницу с #admin в конце).
    ============================================================ */
-const ADMIN_ID = "8499213579";   // Telegram user id главного админа
+const ADMIN_IDS = ["8499213579", "6829681470"];   // Telegram id админов
+const ADMIN_ID  = ADMIN_IDS[0];
 const API_URL  = "";
+/* ⬇️ Если страницу раздаёт НЕ bot.py (например, GitHub Pages) —
+   впишите сюда HTTPS-адрес сервера, на котором запущен bot.py.
+   Пример: const SERVER_URL = "https://arcade.example.com";
+   Можно также открыть приложение с ?api=https://адрес — он запомнится. */
+let SERVER_URL = "";
+try{
+  const q = new URLSearchParams(location.search).get('api');
+  if(q){ localStorage.setItem('arcade10_api', q); }
+  SERVER_URL = SERVER_URL || localStorage.getItem('arcade10_api') || '';
+}catch(e){}
+const API_BASE = (API_URL || SERVER_URL || '').replace(/\/+$/, '');
 const POLL_MS  = 4000;           // как часто мини-приложение опрашивает сервер
 
 const tgUser = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || null;
 const myId = tgUser ? String(tgUser.id) : null;
 const myUsername = tgUser && tgUser.username ? tgUser.username.toLowerCase() : null;
-let isAdmin = myId === ADMIN_ID || (!API_URL && location.hash === '#admin');
+let isAdmin = (myId && ADMIN_IDS.includes(myId)) || (!API_BASE && location.hash === '#admin');
 
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -986,7 +998,7 @@ const Local = {
 const Remote = {
   async post(path, body){
     try{
-      const r = await fetch(API_URL.replace(/\/+$/,'') + path, {
+      const r = await fetch(API_BASE + path, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(Object.assign({initData: tg ? tg.initData : ''}, body||{}))
       });
@@ -1004,7 +1016,7 @@ const Remote = {
   game(id, closed, minutes){ return this.post('/api/admin/game', {id, closed, minutes}); },
   allGames(closed, minutes){ return this.post('/api/admin/games_all', {closed, minutes}); }
 };
-const Backend = API_URL ? Remote : Local;
+const Backend = API_BASE ? Remote : Local;
 
 /* ============ СОСТОЯНИЕ + СИНХРОНИЗАЦИЯ ============ */
 const State = {balance:null, closed:{}, offset:0, online:false};
@@ -1093,10 +1105,10 @@ function updateConn(){
   const b = document.getElementById('connBadge'); if(!b) return;
   const label = b.querySelector('span');
   b.className = 'conn';
-  if(!API_URL){ b.classList.add('local'); label.textContent='Локальный режим'; }
+  if(!API_BASE){ b.classList.add('local'); label.textContent='Локальный режим'; }
   else if(State.online){ b.classList.add('on'); label.textContent='Сервер онлайн'; }
   else { b.classList.add('off'); label.textContent='Нет связи'; }
-  document.getElementById('localWarn').style.display = API_URL ? 'none' : 'block';
+  document.getElementById('localWarn').style.display = API_BASE ? 'none' : 'block';
 }
 
 /* ============ МАГАЗИН ============ */
