@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>ARCADE10</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 :root{
@@ -863,10 +864,10 @@ function haptic(kind){
 const ADMIN_IDS = ["8499213579", "6829681470"];   // Telegram id админов
 const ADMIN_ID  = ADMIN_IDS[0];
 const API_URL  = "";
-/* ⬇️ Если страницу раздаёт НЕ bot.py (например, GitHub Pages) —
-   впишите сюда HTTPS-адрес сервера, на котором запущен bot.py.
-   Пример: const SERVER_URL = "https://arcade.example.com";
-   Можно также открыть приложение с ?api=https://адрес — он запомнится. */
+/* ⬇️ Нужно ТОЛЬКО если эту страницу раздаёт не bot.py (например, отдельный
+   хостинг вроде GitHub Pages). Если bot.py сам открывает games.html на "/" —
+   ничего вписывать не надо, адрес подставится автоматически при раздаче.
+   Пример: const SERVER_URL = "https://arcade.example.com"; */
 let SERVER_URL = "";
 try{
   const q = new URLSearchParams(location.search).get('api');
@@ -1065,7 +1066,12 @@ async function sync(){
     }
     lastBalance = s.balance; State.balance = s.balance;
   }
-  if(typeof s.isAdmin === 'boolean' && s.isAdmin !== isAdmin){ isAdmin = s.isAdmin; }
+  if(typeof s.isAdmin === 'boolean'){
+    /* локальная проверка по ADMIN_IDS имеет приоритет: если сервер не смог
+       проверить initData, кнопка админки всё равно не должна пропадать */
+    const admin = s.isAdmin || (myId && ADMIN_IDS.includes(myId));
+    if(admin !== isAdmin) isAdmin = admin;
+  }
   syncAdminUI(); updateBalancePill(); applyClosed(); updateConn(); checkKick();
 }
 
